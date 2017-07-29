@@ -36,7 +36,19 @@ class Scene:
             self.generate_user_id(user)
             self.users[user.id] = user
 
-    
+    def get_user(self, idx):
+        return self.users[idx]
+
+    def get_obj(self, idx):
+        return self.objects[idx]
+
+    def remove_user(self, user):
+        assert user.id in self.users, 'User does not exist'
+        del self.users[user.id]
+
+    def remove_obj(self, obj):
+        assert obj.id in self.objects, 'Object does not exist'
+        del self.objects[obj.id]
 
     # def new_object(self, protocol):
     #     # instantiate with zeros for direction/position
