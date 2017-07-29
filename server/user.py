@@ -1,10 +1,12 @@
-class AR_Object:
+class User:
     def __init__(self, position, direction, protocol):
         self.direction = direction
         self.position = position
-        self.protocol = protocol
         self.id = None
-        self.lock = False
+        self.address = address
+
+    def on_user_update(self):
+        raise NotImplementedError()
 
     def set_id(self, i):
         if self.id:
@@ -12,16 +14,11 @@ class AR_Object:
         self.id = i
 
     def __eq__(self, other):
-        if not isinstance(other, AR_Object):
+        if not isinstance(other, User):
             return False
         else:
             return self.id == other.id
 
-    def on_object_selection_received(self):
-        raise NotImplementedError()
-
-    def on_select(self,user):
-        raise NotImplementedError()
-
-    # def on_object_manipulation_received(self):
-    #     raise NotImplementedError()
+    def on_new_user_spatial_information(self, newPos, newDir):
+        self.position = newPos
+        self.direction = newDir
