@@ -3,7 +3,7 @@ class User:
         self.direction = direction
         self.position = position
         self.id = None
-        self.address = address
+        self.protocol = protocol 
 
     def on_user_update(self):
         raise NotImplementedError()
@@ -17,7 +17,7 @@ class User:
         if not isinstance(other, User):
             return False
         else:
-            return self.id == other.id
+            return self.id == other.id or self.protocol.addr == other.protocol.addr
 
     def on_new_user_spatial_information(self, newPos, newDir):
         self.position = newPos

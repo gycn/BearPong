@@ -1,8 +1,7 @@
 class AR_Object:
-    def __init__(self, position, direction, protocol):
+    def __init__(self, position, direction):
         self.direction = direction
         self.position = position
-        self.protocol = protocol
         self.id = None
         self.lock = False
 
@@ -21,11 +20,11 @@ class AR_Object:
         self.position = newPos
         self.direction = newDir
 
-    def on_object_selection_received(self):
-        raise NotImplementedError()
+    #def on_object_selection_received(self):
+    #    raise NotImplementedError()
 
-    def on_select(self,user):
-        raise NotImplementedError()
+    #def on_select(self,user):
+    #    raise NotImplementedError()
 
     # def on_object_manipulation_received(self):
     #     raise NotImplementedError()
