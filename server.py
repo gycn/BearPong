@@ -7,23 +7,15 @@ class Echo(Protocol):
 
     def __init__(self, factory):
         self.factory = factory
-        self.opcodes = {
-            '0x00': self.update_user
-            '0x01': self.select_object
-            '0x02': self.man_object
-            '0x10': self.update_object
-        }
-        self.objects
+        # self.opcodes = {
+        #     '0x00': self.update_user
+        #     '0x01': self.select_object
+        #     '0x02': self.man_object
+        #     '0x10': self.update_object
+        # }
 
     def read_opcode(self, data):
         return data[0]
-
-    def update_user(self):
-
-    def man_object(self):
-
-    def update_object(self):
-
 
 
     def connectionMade(self):
