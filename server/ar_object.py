@@ -1,5 +1,5 @@
 class AR_Object:
-    def __init__(self, direction, position, protocol):
+    def __init__(self, position, direction, protocol):
         self.direction = direction
         self.position = position
         self.protocol = protocol

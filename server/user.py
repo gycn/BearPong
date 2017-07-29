@@ -1,5 +1,5 @@
 class User:
-    def __init__(self, direction, position, protocol):
+    def __init__(self, position, direction, protocol):
         self.direction = direction
         self.position = position
         self.id = None
@@ -18,3 +18,7 @@ class User:
             return False
         else:
             return self.id == other.id
+
+    def on_new_user_spatial_information(self, newPos, newDir):
+        self.position = newPos
+        self.direction = newDir

@@ -24,7 +24,10 @@ class Scene:
 
     def new_user(self, protocol):
         # instantiate with zeros for direction/position
-        self.add_user(user.User(np.zeros((1,3)), np.zeros((1,3)), protocol))
+        new = user.User(np.zeros((1,3)), np.zeros((1,3)), protocol)
+        self.add_user(new)
+        assert new.id, 'New User must have an ID'
+        return new
 
     def add_user(self, user):
         if user in self.users:
@@ -33,12 +36,18 @@ class Scene:
             self.generate_user_id(user)
             self.users[user.id] = user
 
-    def new_object(self, protocol):
-        self.add_object(ar_object.AR_Object(np.zeros((1,3)), np.zeros((1,3)), protocol))
+    
 
-    def add_object(self, obj):
-        if obj in self.obj:
-            raise Exception('Object already exists!')
-        else:
-            self.generate_user_id(user)
-            self.users[user.id] = user
+    # def new_object(self, protocol):
+    #     # instantiate with zeros for direction/position
+    #     new = ar_object.AR_Object(np.zeros((1,3)), np.zeros((1,3)), protocol)
+    #     self.add_object(new)
+    #     assert new.id, 'New User must have an ID'
+    #     return new
+    #
+    # def add_object(self, obj):
+    #     if obj in self.obj:
+    #         raise Exception('Object already exists!')
+    #     else:
+    #         self.generate_user_id(user)
+    #         self.users[user.id] = user
