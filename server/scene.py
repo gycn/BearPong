@@ -75,7 +75,7 @@ class Scene:
             
     def send_message_to_all_users(self, msg):
         for key, user in self.users.items():
-            self.user.protocol.write(msg)
+            user.protocol.transport.write(msg)
 
     def send_object_updates(self):
         for key, obj in self.objects.items():
