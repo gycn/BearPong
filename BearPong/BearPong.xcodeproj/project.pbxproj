@@ -12,6 +12,7 @@
 		2F48EDBA0CE6A06EBF1B539A /* Pods_BearPongTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43EB66C8DB1E275B32638E05 /* Pods_BearPongTests.framework */; };
 		B34F8BA51F2D216100DE0959 /* ytcpsocket.c in Sources */ = {isa = PBXBuildFile; fileRef = B34F8BA41F2D215400DE0959 /* ytcpsocket.c */; };
 		B34F8BA71F2D276800DE0959 /* SwiftSocket.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B34F8BA61F2D276800DE0959 /* SwiftSocket.framework */; };
+		B3BB70221F2D976200313D28 /* EntranceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BB70211F2D976200313D28 /* EntranceViewController.swift */; };
 		B3F4F5A21F2D075B001ADF46 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F5A11F2D075B001ADF46 /* AppDelegate.swift */; };
 		B3F4F5A41F2D075B001ADF46 /* art.scnassets in Resources */ = {isa = PBXBuildFile; fileRef = B3F4F5A31F2D075B001ADF46 /* art.scnassets */; };
 		B3F4F5A61F2D075B001ADF46 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F5A51F2D075B001ADF46 /* ViewController.swift */; };
@@ -51,6 +52,8 @@
 		AE937CDAD25D7CCB06B56479 /* Pods-BearPong.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BearPong.release.xcconfig"; path = "Pods/Target Support Files/Pods-BearPong/Pods-BearPong.release.xcconfig"; sourceTree = "<group>"; };
 		B34F8BA41F2D215400DE0959 /* ytcpsocket.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = ytcpsocket.c; path = ../Pods/SwiftSocket/ytcpsocket.c; sourceTree = "<group>"; };
 		B34F8BA61F2D276800DE0959 /* SwiftSocket.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftSocket.framework; path = "../../../Library/Developer/Xcode/DerivedData/BearPong-hhknnuehcwvjuofiymndohgottxf/Build/Products/Debug-iphoneos/SwiftSocket/SwiftSocket.framework"; sourceTree = "<group>"; };
+		B3BB70201F2D94F200313D28 /* backimage.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = backimage.jpg; path = ../../../../Downloads/backimage.jpg; sourceTree = "<group>"; };
+		B3BB70211F2D976200313D28 /* EntranceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntranceViewController.swift; sourceTree = "<group>"; };
 		B3F4F59E1F2D075B001ADF46 /* BearPong.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BearPong.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		B3F4F5A11F2D075B001ADF46 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		B3F4F5A31F2D075B001ADF46 /* art.scnassets */ = {isa = PBXFileReference; lastKnownFileType = wrapper.scnassets; path = art.scnassets; sourceTree = "<group>"; };
@@ -142,11 +145,13 @@
 				B3F4F5A11F2D075B001ADF46 /* AppDelegate.swift */,
 				B3F4F5A31F2D075B001ADF46 /* art.scnassets */,
 				B3F4F5A51F2D075B001ADF46 /* ViewController.swift */,
+				B3BB70211F2D976200313D28 /* EntranceViewController.swift */,
+				B3F4F5D11F2D12C9001ADF46 /* HomeViewController.swift */,
+				B3F4F5A71F2D075B001ADF46 /* Main.storyboard */,
 				B3FFF6611F2D448E001A7CCC /* Ball.swift */,
 				B3FFF6631F2D4904001A7CCC /* ARObject.swift */,
-				B3F4F5A71F2D075B001ADF46 /* Main.storyboard */,
-				B3F4F5D11F2D12C9001ADF46 /* HomeViewController.swift */,
 				B3F4F5AA1F2D075B001ADF46 /* Assets.xcassets */,
+				B3BB70201F2D94F200313D28 /* backimage.jpg */,
 				B3F4F5AC1F2D075B001ADF46 /* LaunchScreen.storyboard */,
 				B3F4F5AF1F2D075B001ADF46 /* Info.plist */,
 			);
@@ -467,6 +472,7 @@
 				B3FFF6641F2D4904001A7CCC /* ARObject.swift in Sources */,
 				B3F4F5A21F2D075B001ADF46 /* AppDelegate.swift in Sources */,
 				B3FFF6621F2D448E001A7CCC /* Ball.swift in Sources */,
+				B3BB70221F2D976200313D28 /* EntranceViewController.swift in Sources */,
 				B34F8BA51F2D216100DE0959 /* ytcpsocket.c in Sources */,
 				B3F4F5D21F2D12C9001ADF46 /* HomeViewController.swift in Sources */,
 			);
