@@ -9,22 +9,23 @@ GAME_END = b'\xFF'
 FIRST_PLAYER = b'\x00'
 
 class PongBall(AR_Object):
-    def __init__(self, position, direction):
-        AR_Object.__init__(position, direction)
-
+    def __init__(self, position, direction, velocity):
+        AR_Object.__init__(self, position, direction, velocity)
+        
 
 class BearPongScene(Scene):
     def __init__(self, radius = 1, dt = 0.017):
-        Scene.__init__()
-        self.add_object(PongBall(np.zeros((1,3)), np.zeros((1,3))))
-        self.scores = [0,0]
-        self.started = False
-        # pylint: disable=no-member
-        self.turn = 0 if np.random.rand() > 0.5 else 1
-        self.radius = radius
-        self.dt = dt
-        self.sent_turn_start = False
-        self.velocity = None
+        Scene.__init__(self)
+        self.ball = PongBall(np.zeros(3), np.zeros(3), np.zeros(3))
+        self.add_object(self.ball)
+        #self.scores = [0,0]
+        #self.started = False
+        ## pylint: disable=no-member
+        #self.turn = 0 if np.random.rand() > 0.5 else 1
+        #self.radius = radius
+        #self.dt = dt
+        #self.sent_turn_start = False
+        #self.velocity = None
 
     def new_user(self, protocol):
         if self.user_count == 2:

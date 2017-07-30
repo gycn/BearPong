@@ -1,7 +1,8 @@
 class AR_Object:
-    def __init__(self, position, direction):
+    def __init__(self, position, direction, velocity):
         self.direction = direction
         self.position = position
+        self.velocity = velocity
         self.id = None
         self.lock = False
 
@@ -16,9 +17,10 @@ class AR_Object:
         else:
             return self.id == other.id
 
-    def on_new_object_spatial_information(self, newPos, newDir):
+    def on_new_object_spatial_information(self, newPos, newDir, newVel):
         self.position = newPos
         self.direction = newDir
+        self.velocity = newVel
 
     #def on_object_selection_received(self):
     #    raise NotImplementedError()
