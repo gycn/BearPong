@@ -1,10 +1,10 @@
 import user, ar_object
 import numpy as np
-
+from packet_codes import *
 class Scene:
     def __init__(self):
-        self.objects = [] 
-        self.users = []
+        self.objects = {} 
+        self.users = {}
         self.user_count = 0
         self.object_count = 0
 
@@ -35,7 +35,7 @@ class Scene:
         else:
             self.generate_user_id(user)
             print('ADDING USER ID: {}'.format(user.id))
-            self.users.append(user)
+            self.users[user.id] = user
 
     def get_user(self, idx):
         return self.users[idx]
@@ -68,9 +68,26 @@ class Scene:
         if obj in self.obj:
             raise Exception('Object already exists!')
         else:
-            self.generate_user_id(user)
-            self.objects.append(obj)
+            self.generate_object_id(obj)
+            self.object[obj.id] = obj
             
     def send_message_to_all_users(self, msg):
-         for user in self.users:
-             self.user.protocol.write(msg)
+        for user in self.users:
+            self.user.protocol.write(msg)
+
+    def send_object_updates(self):
+        for key, obj in self.objects:
+            position_bytes = b''
+            for i in range(3):
+                position_bytes += bytearray(struct.pack("f", obj.position[i])) 
+
+            direction_bytes = b''
+            for i in range(3):
+                direction_bytes += bytearray(struct.pack("f", obj.direction[i])) 
+
+            velocity_bytes = b''
+            for i in range(3):
+                velocity_bytes += bytearray(struct.pack("f", obj.velocity[i])) 
+            
+            packet = UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE + bytes(key) + position_bytes + direction_bytes + velocity_bytes  
+            self.send_message_to_all_users(packet)
