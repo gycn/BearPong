@@ -9,6 +9,8 @@ import struct
 
 import packet_codes
 
+from bearpong import BearPongScene
+from scene import Scene
 
 def get_opcode(bytes_in):
     return bytes_in[0]
@@ -76,11 +78,12 @@ class ARWebServerProtocol(Protocol):
         object_id = convert_bytes_to_int(data[1:5])
         print(data[1:5])
         print(object_id)
-        success = self.scene.get_object(object_id).on_object_select(user)
+        success = self.scene.get_object(object_id).on_object_select(self.user)
         self.transport.write(bytearray([packet_codes.SELECT_OBJECT_RESPONSE_OPCODE, success]))
     
     def handle_implementation_specific_message(self, data):
-        self.user.on_implementation_specific_message(data)
+        print(data)
+        #self.user.on_implementation_specific_message(data)
 
 class ARWebServerFactory(Factory):
 
@@ -111,6 +114,6 @@ class ARServer:
 
 
 if __name__ == '__main__':
-    scene = Scene()
-    server = ARServer(scene, 8007)
+    scene = BearPongScene()
+    server = ARServer(scene, 8007, 2)
     server.start()

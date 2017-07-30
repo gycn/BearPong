@@ -5,9 +5,6 @@ class User:
         self.id = None
         self.protocol = protocol 
 
-    def on_user_update(self):
-        raise NotImplementedError()
-
     def set_id(self, i):
         if self.id:
             raise Exception('This object already has an ID')

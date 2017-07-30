@@ -1,6 +1,7 @@
 import user, ar_object
 import numpy as np
 from packet_codes import *
+import struct
 class Scene:
     def __init__(self):
         self.objects = {}
@@ -73,14 +74,14 @@ class Scene:
             self.objects[obj.id] = obj
             
     def send_message_to_all_users(self, msg):
-        for user in self.users:
+        for key, user in self.users.items():
             self.user.protocol.write(msg)
 
     def send_object_updates(self):
-        for key, obj in self.objects:
+        for key, obj in self.objects.items():
             position_bytes = b''
             for i in range(3):
-                position_bytes += bytearray(struct.pack("f", obj.position[i]))
+                position_bytes += struct.pack("f", obj.position[i])
 
             direction_bytes = b''
             for i in range(3):
@@ -90,5 +91,5 @@ class Scene:
             for i in range(3):
                 velocity_bytes += bytearray(struct.pack("f", obj.velocity[i]))
 
-            packet = UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE + bytes(key) + position_bytes + direction_bytes + velocity_bytes
+            packet = bytes(UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE) + bytes(key) + position_bytes + direction_bytes + velocity_bytes
             self.send_message_to_all_users(packet)
