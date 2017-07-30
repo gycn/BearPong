@@ -54,8 +54,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         view.addGestureRecognizer(tap)
         view.isUserInteractionEnabled = true
         
-        socketSetup()
-        
         // Setup timers
         
         // Set the view's delegate
@@ -70,14 +68,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // Set the scene to the view
         sceneView.scene = scene
         sceneView.scene.physicsWorld.contactDelegate = self
+        socketSetup()
+
     }
     
     func socketSetup() {
         switch client.connect(timeout: 3) {
         case .success:
             // Start sending and receiving data at FPS intervals
-            Timer.scheduledTimer(timeInterval: 1/FPS, target: self, selector: #selector(ViewController.sendData), userInfo: nil, repeats: true)
-            Timer.scheduledTimer(timeInterval: 1/FPS, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
+            Timer.scheduledTimer(timeInterval: 0.08, target: self, selector: #selector(ViewController.sendData), userInfo: nil, repeats: true)
+            Timer.scheduledTimer(timeInterval: 0.08, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
+            Timer.scheduledTimer(timeInterval: 0.08, target: self, selector: #selector(ViewController.getUserVector), userInfo: nil, repeats: true)
         case .failure(let error):
             print(error)
         }
@@ -98,7 +99,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         if let response = String(bytes: data, encoding: .utf8) {
             textLabel.text = response
         }
-        userUpdate(instruction: data)
+        //userUpdate(instruction: data)
     }
     
     // Get Instruction
@@ -150,6 +151,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         let Y = floatToByteArray(value: vector.y)
         let Z = floatToByteArray(value: vector.z)
         return X + Y + Z
+    }
+    
+    // Update User Spatial Information If Byte Array
+    func updateUserSpatialInformationByteArray(position: [UInt8], orientation: [UInt8]) {
+        let opcodeArray = intToByteArray(value: 00)
+        sentInstruction = opcodeArray + position + orientation
     }
 
     // Update User Spatial Information
@@ -229,8 +236,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         if doesBallExist == true {
             return
         }
+        print("1")
         ballNode.isHidden = false
-        let (direction, position) = self.getUserVector()
+        print("2")
+
+        let (direction, position) = self.initializeUserVector()
+        print("1")
+
         ballNode.position = position
         
         let ballDir = direction
@@ -240,21 +252,21 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         
         let velocity = Float(0.5) //meters/second
         let timeStep = Float(0.0083333333333333) //seconds
-        
-        while (gameExisting) {
-            ballNode.position = SCNVector3(
-                ballNode.position.x + velocity * timeStep,
-                ballNode.position.y + velocity * timeStep,
-                ballNode.position.z + velocity * timeStep)
-            sceneView.scene.rootNode.addChildNode(ballNode)
-            doesBallExist = true
-            
-            //TODO - Conditions to change  playerWins
-            
-            if (playerWins) {
-                gameExisting = false
-            }
-        }
+        sceneView.scene.rootNode.addChildNode(ballNode)
+//        while (gameExisting) {
+//            ballNode.position = SCNVector3(
+//                ballNode.position.x + velocity * timeStep,
+//                ballNode.position.y + velocity * timeStep,
+//                ballNode.position.z + velocity * timeStep)
+//            sceneView.scene.rootNode.addChildNode(ballNode)
+//            doesBallExist = true
+//
+//            //TODO - Conditions to change  playerWins
+//
+//            if (playerWins) {
+//                gameExisting = false
+//            }
+//        }
 //        ballNode.physicsBody?.applyForce(ballDir, asImpulse: true)
 //        sceneView.scene.rootNode.addChildNode(ballNode)
 //        doesBallExist = true
@@ -266,15 +278,23 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         static let user = CollisionCategory(rawValue: 1 << 1) // 00..10
     }
     
-    func getUserVector() -> (SCNVector3, SCNVector3) {
+    func initializeUserVector() -> (SCNVector3, SCNVector3) {
         if let frame = self.sceneView.session.currentFrame {
             let mat = SCNMatrix4(frame.camera.transform)
             let ori = SCNVector3(-1 * mat.m31, -1 * mat.m32, -1 * mat.m33)
             let pos = SCNVector3(mat.m41, mat.m42, mat.m43)
-            updateUserSpatialInformation(position: vectorToByteArray(vector: pos), orientation: vectorToByteArray(vector: ori))
             return (pos, ori)
         }
         return (SCNVector3(0, 0, -0.2), SCNVector3(0, 0, -1))
+    }
+    
+    @objc func getUserVector() {
+        if let frame = self.sceneView.session.currentFrame {
+            let mat = SCNMatrix4(frame.camera.transform)
+            let ori = SCNVector3(-1 * mat.m31, -1 * mat.m32, -1 * mat.m33)
+            let pos = SCNVector3(mat.m41, mat.m42, mat.m43)
+            updateUserSpatialInformationByteArray(position: vectorToByteArray(vector: pos), orientation: vectorToByteArray(vector: ori))
+        }
     }
     
     func byteArrayToFloat(byteArray: [UInt8]) -> Float {

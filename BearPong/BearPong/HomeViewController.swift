@@ -18,9 +18,13 @@ class HomeViewController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        view.backgroundColor = UIColor.darkGray
         passwordField.delegate = self as? UITextFieldDelegate
         passwordField.text = "Room Name"
-        button.setTitle("Join Room", for: .normal)
+        passwordField.font = UIFont(name: "Avenir", size: 14)
+        button.setTitle("Join/Create Room", for: .normal)
+        button.tintColor = UIColor.green
+        button.titleLabel?.font = UIFont(name: "Avenir", size: 14)
         // Do any additional setup after loading the view.
     }
     func dismissKeyboard() {

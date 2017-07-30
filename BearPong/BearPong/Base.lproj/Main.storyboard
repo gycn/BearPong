@@ -17,9 +17,16 @@
                         <rect key="frame" x="0.0" y="0.0" width="375" height="667"/>
                         <autoresizingMask key="autoresizingMask" widthSizable="YES" heightSizable="YES"/>
                         <subviews>
-                            <textField opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="password goes here" borderStyle="roundedRect" textAlignment="natural" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="oQY-DU-gjN">
-                                <rect key="frame" x="82" y="214" width="253" height="30"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
+                            <button opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="q1m-lL-jMc">
+                                <rect key="frame" x="107" y="359" width="161" height="72"/>
+                                <state key="normal" title="Button"/>
+                                <connections>
+                                    <action selector="buttonPressed:" destination="8Dg-fZ-sAm" eventType="touchUpInside" id="F3h-8e-Cd1"/>
+                                    <segue destination="BV1-FR-VrT" kind="show" identifier="ARViewSegue" id="CF8-Ia-5R6"/>
+                                </connections>
+                            </button>
+                            <textField opaque="NO" contentMode="scaleToFill" misplaced="YES" contentHorizontalAlignment="left" contentVerticalAlignment="center" text="password goes here" borderStyle="roundedRect" textAlignment="center" minimumFontSize="17" translatesAutoresizingMaskIntoConstraints="NO" id="oQY-DU-gjN">
+                                <rect key="frame" x="74" y="294" width="253" height="30"/>
                                 <nil key="textColor"/>
                                 <fontDescription key="fontDescription" type="system" pointSize="14"/>
                                 <textInputTraits key="textInputTraits"/>
@@ -27,17 +34,14 @@
                                     <action selector="passwordFieldTapped:" destination="8Dg-fZ-sAm" eventType="editingDidEnd" id="7GJ-tW-9ta"/>
                                 </connections>
                             </textField>
-                            <button opaque="NO" contentMode="scaleToFill" fixedFrame="YES" contentHorizontalAlignment="center" contentVerticalAlignment="center" buttonType="roundedRect" lineBreakMode="middleTruncation" translatesAutoresizingMaskIntoConstraints="NO" id="q1m-lL-jMc">
-                                <rect key="frame" x="107" y="267" width="161" height="72"/>
-                                <autoresizingMask key="autoresizingMask" flexibleMaxX="YES" flexibleMaxY="YES"/>
-                                <state key="normal" title="Button"/>
-                                <connections>
-                                    <action selector="buttonPressed:" destination="8Dg-fZ-sAm" eventType="touchUpInside" id="F3h-8e-Cd1"/>
-                                    <segue destination="BV1-FR-VrT" kind="show" identifier="ARViewSegue" id="CF8-Ia-5R6"/>
-                                </connections>
-                            </button>
                         </subviews>
                         <color key="backgroundColor" white="1" alpha="1" colorSpace="calibratedWhite"/>
+                        <constraints>
+                            <constraint firstItem="oQY-DU-gjN" firstAttribute="top" secondItem="FWs-zZ-p8w" secondAttribute="top" constant="274" id="0mf-7V-WUs"/>
+                            <constraint firstItem="oQY-DU-gjN" firstAttribute="centerX" secondItem="FWs-zZ-p8w" secondAttribute="centerX" id="GlG-Nz-MEw"/>
+                            <constraint firstItem="q1m-lL-jMc" firstAttribute="centerX" secondItem="FWs-zZ-p8w" secondAttribute="centerX" id="jSb-nK-dLH"/>
+                            <constraint firstItem="q1m-lL-jMc" firstAttribute="top" secondItem="oQY-DU-gjN" secondAttribute="bottom" constant="35" id="us5-fE-VHN"/>
+                        </constraints>
                         <viewLayoutGuide key="safeArea" id="FWs-zZ-p8w"/>
                     </view>
                     <connections>
