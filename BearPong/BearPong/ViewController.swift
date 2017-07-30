@@ -181,9 +181,30 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         ballNode.position = position
         
         let ballDir = direction
-        ballNode.physicsBody?.applyForce(ballDir, asImpulse: true)
-        sceneView.scene.rootNode.addChildNode(ballNode)
-        doesBallExist = true
+        
+        var gameExisting = true
+        var playerWins = false
+        
+        let velocity = Float(0.5) //meters/second
+        let timeStep = Float(0.0083333333333333) //seconds
+        
+        while (gameExisting) {
+            ballNode.position = SCNVector3(
+                ballNode.position.x + velocity * timeStep,
+                ballNode.position.y + velocity * timeStep,
+                ballNode.position.z + velocity * timeStep)
+            sceneView.scene.rootNode.addChildNode(ballNode)
+            doesBallExist = true
+            
+            //TODO - Conditions to change  playerWins
+            
+            if (playerWins) {
+                gameExisting = false
+            }
+        }
+//        ballNode.physicsBody?.applyForce(ballDir, asImpulse: true)
+//        sceneView.scene.rootNode.addChildNode(ballNode)
+//        doesBallExist = true
     }
     
     struct CollisionCategory: OptionSet {
