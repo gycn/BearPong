@@ -92,8 +92,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     func userUpdate(instruction: [UInt8]) {
         let array = instruction[0...1]
-        let data = Data(bytes: array)
-        let receivedOpcode = Int(UInt32(bigEndian: data.withUnsafeBytes { $0.pointee }))
+        let receivedOpcode = byteArrayToInt(byteArray: Array(array))
         switch receivedOpcode {
         case UPDATE_USER_SPATIAL_INFORMATION_OPCODE:
             return
@@ -101,7 +100,9 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             return
         case UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE:
             let objectID = instruction[2...9]
-            let new_object_matrix = instruction[10...127]
+            let position = instruction[10...33]
+            let orientation = instruction[34...57]
+            let velocity = instruction[58...81]
 
         case SEND_USER_ID_OPCODE:
             let userID = instruction[2...9]
@@ -110,20 +111,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             let response = [2...3]
         default:
             print("hi")
-
-    
         }
-//        if receivedOpcode == UPDATE_USER_SPATIAL_INFORMATION_OPCODE {
-//
-//        } else if receivedOpcode == SELECT_OBJECT_OPCODE {
-//
-//        } else if receivedOpcode == UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE {
-//
-//        } else if receivedOpcode == SEND_USER_ID_OPCODE {
-//
-//        }
     }
     
+    func updateSpatial(position: Int, orientation: Int) {
+        let opcode = [00]
+        let positionArray = intToByteArray(value: position)
+    }
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         configureSession()
@@ -207,5 +201,33 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             return (dir, pos)
         }
         return (SCNVector3(0, 0, -1), SCNVector3(0, 0, -0.2))
+    }
+    
+    func byteArrayToFloat(byteArray: [UInt8]) -> Float {
+        let data = Data(bytes: byteArray)
+        return Float(UInt32(bigEndian: data.withUnsafeBytes { $0.pointee }))
+    }
+    
+    func byteArrayToInt(byteArray: [UInt8]) -> Int {
+        let data = Data(bytes: byteArray)
+        return Int(UInt32(bigEndian: data.withUnsafeBytes { $0.pointee }))
+    }
+    
+    func intToByteArray(value: Int) -> [UInt8] {
+        var value = value
+        return withUnsafePointer(to: &value) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Int>.size) {
+                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Int>.size))
+            }
+        }
+    }
+    
+    func intToByteArray(value: Float) -> [UInt8] {
+        var value = value
+        return withUnsafePointer(to: &value) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Float>.size) {
+                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Float>.size))
+            }
+        }
     }
 }
