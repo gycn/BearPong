@@ -10,7 +10,7 @@ import UIKit
 import SceneKit
 
 class Ball: ARObject {
-    var velocity:SCNVector3
+    var velocity:SCNVector3 = SCNVector3(0, 0, 0)
     override init () {
         super.init()
         let sphere = SCNSphere(radius: 0.05)

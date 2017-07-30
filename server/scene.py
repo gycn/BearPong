@@ -66,12 +66,12 @@ class Scene:
     #     return new
 
     def add_object(self, obj):
-        if obj in self.obj:
+        if obj.id in self.objects:
             raise Exception('Object already exists!')
         else:
             self.generate_object_id(obj)
-            self.object[obj.id] = obj
-
+            self.objects[obj.id] = obj
+            
     def send_message_to_all_users(self, msg):
         for user in self.users:
             self.user.protocol.write(msg)
