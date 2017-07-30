@@ -6,6 +6,7 @@
 //  Copyright © 2017 Walt Leung. All rights reserved.
 //
 
+import Foundation
 import UIKit
 import SceneKit
 import ARKit
@@ -18,8 +19,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     var addr = "192.168.0.103"
     var prt = 8007
     var client:TCPClient = TCPClient(address: "192.168.0.103", port: Int32(8007))
-    var receivedData = ""
     var doesBallExist = false
+    
+    // Opcodes
+    let UPDATE_USER_SPATIAL_INFORMATION_OPCODE = 0x00
+    let SELECT_OBJECT_OPCODE = 0x01
+    let UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE = 0x10
+    let SEND_USER_ID_OPCODE = 0x11
+    let SELECT_OBJECT_RESPONSE_OPCODE = 0x12
+    
+    // Opcodes
+    var receivedOpcode: Int = 0
+    var sentInstruction: [UInt8] = []
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -51,15 +63,16 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         switch client.connect(timeout: 3) {
         case .success:
             print("success!")
-            Timer.scheduledTimer(timeInterval: 3, target: self, selector: Selector(("sendData")), userInfo: nil, repeats: true)
-            Timer.scheduledTimer(timeInterval: 3, target: self, selector: Selector(("receiveData")), userInfo: nil, repeats: true)
+            sendData()
+            Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(ViewController.sendData), userInfo: nil, repeats: true)
+            Timer.scheduledTimer(timeInterval: 0.10, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
         case .failure(let error):
             print("error2")
             print(error)
         }
     }
     
-    func sendData() {
+    @objc func sendData() {
         switch client.send(string: "fuck you") {
         case .success:
             print("success2")
@@ -69,14 +82,47 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         }
     }
 
-    func receiveData() {
+    @objc func receiveData() {
         guard let data = client.read(1024*10) else { return }
         if let response = String(bytes: data, encoding: .utf8) {
             textLabel.text = response
-            self.receivedData = response
         }
+        userUpdate(instruction: data)
     }
     
+    func userUpdate(instruction: [UInt8]) {
+        let array = instruction[0...1]
+        let data = Data(bytes: array)
+        let receivedOpcode = Int(UInt32(bigEndian: data.withUnsafeBytes { $0.pointee }))
+        switch receivedOpcode {
+        case UPDATE_USER_SPATIAL_INFORMATION_OPCODE:
+            return
+        case SELECT_OBJECT_OPCODE:
+            return
+        case UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE:
+            let objectID = instruction[2...9]
+            let new_object_matrix = instruction[10...127]
+
+        case SEND_USER_ID_OPCODE:
+            let userID = instruction[2...9]
+
+        case SELECT_OBJECT_RESPONSE_OPCODE:
+            let response = [2...3]
+        default:
+            print("hi")
+
+    
+        }
+//        if receivedOpcode == UPDATE_USER_SPATIAL_INFORMATION_OPCODE {
+//
+//        } else if receivedOpcode == SELECT_OBJECT_OPCODE {
+//
+//        } else if receivedOpcode == UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE {
+//
+//        } else if receivedOpcode == SEND_USER_ID_OPCODE {
+//
+//        }
+    }
     
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
