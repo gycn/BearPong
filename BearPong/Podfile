@@ -6,7 +6,6 @@ target 'BearPong' do
   use_frameworks!
 
   # Pods for BearPong
-  pod 'SwiftSocket', '~> 2.0'
   pod 'BlueSocket'
 
   target 'BearPongTests' do

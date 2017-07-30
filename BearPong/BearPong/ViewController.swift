@@ -10,7 +10,8 @@ import Foundation
 import UIKit
 import SceneKit
 import ARKit
-import SwiftSocket
+//import SwiftSocket
+import Socket
 
 
 class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDelegate {
@@ -20,7 +21,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     @IBOutlet var sendLabel: UILabel!
     
-    var client:TCPClient = TCPClient(address: "192.168.0.101", port: Int32(8007))
+    // var client:TCPClient = TCPClient(address: "192.168.0.101", port: Int32(8007))
+    var mySocket = try! Socket.create()
+    
+    
     var doesBallExist = false
     
     // Opcodes
@@ -29,7 +33,10 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     let UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE = UInt8(0x10)
     let SEND_USER_ID_OPCODE = UInt8(0x11)
     let SELECT_OBJECT_RESPONSE_OPCODE = UInt8(0x12)
+    let ALLOWED_TO_START_GAME = UInt8(0xff)
     
+    // Dictionary
+    let COMMAND_LENGTHS: [Int: Int] = [0:0]
     // Opcodes
     var receivedOpcode: Int = 0
     var sentInstruction: [UInt8] = []
@@ -38,7 +45,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     var ballNode = Ball()
     
     // UserID
-    var userID: [UInt8] = []
+    var userID:UInt32 = 0
     
     // Frames per second or refresh rate
     var FPS: Int = 15
@@ -48,20 +55,29 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     var receivedUserID = false
     
+    var anchor = Ball()
+    
+    var anchorInitialized = false
+    
+    var gameAllowedToStart = false
+    
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
         // Hide yo balls
         ballNode.isHidden = true
+        anchor.isHidden = true
 
         
         // Setup gesture
         let tap = UITapGestureRecognizer(target: self, action: #selector(self.handleTap(_:)))
         view.addGestureRecognizer(tap)
         view.isUserInteractionEnabled = true
+
+        // Setup command length dictionary
+        var COMMAND_LENGTHS = [UPDATE_USER_SPATIAL_INFORMATION_OPCODE: 24, SELECT_OBJECT_OPCODE: 4, UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE: 68, SEND_USER_ID_OPCODE: 4, SELECT_OBJECT_RESPONSE_OPCODE: 1, ALLOWED_TO_START_GAME: 2]
         
-        // Setup timers
         
         // Set the view's delegate
         sceneView.delegate = self
@@ -75,8 +91,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // Set the scene to the view
         sceneView.scene = scene
         sceneView.scene.physicsWorld.contactDelegate = self
-        socketSetup()
-        
         
         //Asynchronous
         
@@ -85,151 +99,141 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     
     func socketSetup() {
-        switch client.connect(timeout: 3) {
-        case .success:
-            print("hi")
-            // Start sending and receiving data at FPS intervals
-            // Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(ViewController.sendData), userInfo: nil, repeats: true)
-            //var timer = Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
-            // Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(ViewController.getUserVector), userInfo: nil, repeats: true)
-        case .failure(let error):
-            print(error)
+        mySocket.readBufferSize = 32768
+        do {
+            try mySocket.connect(to: "192.168.0.101", port: 8007)
+            try mySocket.setBlocking(mode: false)
+        } catch {
+            print("error")
         }
+//        switch client.connect(timeout: 3) {
+//        case .success:
+//            print("hi")
+//            // Start sending and receiving data at FPS intervals
+//            // Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(ViewController.sendData), userInfo: nil, repeats: true)
+        
+        _ = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
+       Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.getUserVector), userInfo: nil, repeats: true)
+//        case .failure(let error):
+//            print(error)
+//        }
     }
     
     
     
     @objc func sendData() {
-        switch client.send(data: sentInstruction) {
-        case .success:
-            return
-        case .failure(let error):
-            print(error)
+        do {
+            try mySocket.write(from: Data(sentInstruction))
+        } catch {
             return
         }
     }
+    
 
-    @objc func receiveData(data: [UInt8]) {
-        guard let data = client.read(1024*10) else { return }
-//        if let response = String(bytes: data, encoding: .ASCII) {
-//            if response != "" {
-//                textLabel.text = response
-//            }
-//        }
-        userUpdate(instruction: data)
+    @objc func receiveData() {
+        var readData = Data(capacity: 256)
+        do {
+            var num_bytes = try mySocket.read(into: &readData)
+            if num_bytes > 0 {
+                userUpdate(instruction: Array(readData))
+            }
+        } catch {
+            return
+        }
+    }
+    
+    func convert_bytes_to_UInt32(arr : [UInt8], offset: Int) -> UInt32 {
+        let data = Data(bytes: arr[offset...offset + 3])
+        return UInt32(bigEndian: data.withUnsafeBytes { $0.pointee })
+    }
+    
+    func convert_bytes_to_float(arr : [UInt8], offset: Int) -> Float {
+        let data = Data(bytes: arr[offset...offset + 3])
+        return Float(bitPattern: UInt32(bigEndian: data.withUnsafeBytes { $0.pointee } ))
+    }
+    
+    func update_object_spatial_information(instruction: [UInt8]) {
+        var objectID = convert_bytes_to_UInt32(arr : instruction, offset : 1)
+        ballNode.position.x = convert_bytes_to_float(arr : instruction, offset : 5) + anchor.position.x
+        ballNode.position.y = convert_bytes_to_float(arr : instruction, offset : 9) + anchor.position.y
+        ballNode.position.z = convert_bytes_to_float(arr : instruction, offset : 13) + anchor.position.z
+        
+        ballNode.velocity.x = convert_bytes_to_float(arr : instruction, offset : 29)
+        ballNode.velocity.y = convert_bytes_to_float(arr : instruction, offset : 33)
+        ballNode.velocity.z = convert_bytes_to_float(arr : instruction, offset : 37)
     }
     
     // Get Instruction
     func userUpdate(instruction: [UInt8]) {
-        
+        while instruction.count > 0 {
         let opcode = instruction[0]
-        switch opcode {
-        case UPDATE_USER_SPATIAL_INFORMATION_OPCODE:
-            return
-        case SELECT_OBJECT_OPCODE:
-            return
-        case UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE:
-            let objectID = byteArrayToInt(byteArray: Array(instruction[2...9]))
+            switch opcode {
+            case UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE:
+                update_object_spatial_information(instruction : instruction)
+                return
+                
+            case SEND_USER_ID_OPCODE:
+                var uID = convert_bytes_to_UInt32(arr : instruction, offset : 1)
+                self.userID = uID
+                receivedUserID = true
+                return
+            case ALLOWED_TO_START_GAME:
+                gameAllowedToStart = true
+                textLabel.text = String(describing: gameAllowedToStart)
+                ballNode.isHidden = false
+                return
+            case SELECT_OBJECT_RESPONSE_OPCODE:
+                return
             
-            let positionX = byteArrayToFloat(byteArray: Array(instruction[10...17]))
-            let positionY = byteArrayToFloat(byteArray: Array(instruction[18...25]))
-            let positionZ = byteArrayToFloat(byteArray: Array(instruction[26...33]))
-            let position = SCNVector3(positionX, positionY, positionZ)
-            
-            let orientationX = byteArrayToFloat(byteArray: Array(instruction[34...41]))
-            let orientationY = byteArrayToFloat(byteArray: Array(instruction[42...49]))
-            let orientationZ = byteArrayToFloat(byteArray: Array(instruction[50...57]))
-            let orientation = SCNVector3(orientationX, orientationY, orientationZ)
-            
-            let velocityX = byteArrayToFloat(byteArray: Array(instruction[58...65]))
-            let velocityY = byteArrayToFloat(byteArray: Array(instruction[66...73]))
-            let velocityZ = byteArrayToFloat(byteArray: Array(instruction[74...81]))
-            let velocity = SCNVector3(velocityX, velocityY, velocityZ)
-            
-            ballNode.position = position
-//            ballNode.orientation = orientation
-            ballNode.velocity = velocity
-            return
-            
-        case SEND_USER_ID_OPCODE:
-            let uID = Array(instruction[1...4])
-            self.userID = uID
-            textLabel.text = String(describing: instruction)
-            receivedUserID = true
-            return
-
-        case SELECT_OBJECT_RESPONSE_OPCODE:
-            let response = byteArrayToInt(byteArray: Array(instruction[2...3]))
-            
-        default:
-            return
+            default:
+                return
+            }
         }
     }
     
-    func vectorToByteArray(vector: SCNVector3) -> [UInt8] {
-        let X = floatToByteArray(value: vector.x)
-        let Y = floatToByteArray(value: vector.y)
-        let Z = floatToByteArray(value: vector.z)
-        return X + Y + Z
+    func vectorToByteArray(vector: inout SCNVector3) -> [UInt8] {
+        var arr = Data(buffer: UnsafeBufferPointer(start: &vector.x, count: 1))
+        arr.append( Data(buffer: UnsafeBufferPointer(start: &vector.y, count: 1)))
+        arr.append( Data(buffer: UnsafeBufferPointer(start: &vector.z, count: 1)))
+        return Array(arr)
     }
     
     // Send Start/Enter Game Signal
     func enterGame() {
-        let opcodeArray = intToByteArray(value: 255)
-        let length = intToByteArray(value: 1)
-        let packetData = intToByteArray(value: 17)
-//        let instruction = opcodeArray + length + packetData
         let instruction = [UInt8(255), UInt8(1), UInt8(17)]
-        switch client.send(data: instruction) {
-        case .success:
-            sendLabel.text = String(describing: instruction)
-            return
-        case .failure(let error):
-            print(error)
+        do {
+            try mySocket.write(from: Data(instruction))
+        } catch {
             return
         }
     }
     
     // Update User Spatial Information If Byte Array
     func updateUserSpatialInformationByteArray(position: [UInt8], orientation: [UInt8]) {
-        let opcodeArray = intToByteArray(value: 00)
-        let instruction = opcodeArray + position + orientation
-        switch client.send(data: instruction) {
-        case .success:
-            return
-        case .failure(let error):
-            print(error)
+        let opcodeArray = UInt8(00)
+        let instruction = [opcodeArray] + position + orientation
+        do {
+            try mySocket.write(from: Data(instruction))
+        } catch {
             return
         }
     }
 
-    // Update User Spatial Information
-    func updateUserSpatialInformation(position: Float, orientation: Float) {
-        let opcodeArray = intToByteArray(value: 00)
-        let positionArray = floatToByteArray(value: position)
-        
-        // orientation needs to be 4D
-        let orientationArray = floatToByteArray(value: orientation)
-        let instruction = opcodeArray + positionArray + orientationArray
-        switch client.send(data: instruction) {
-        case .success:
-            return
-        case .failure(let error):
-            print(error)
-            return
-        }
-    }
     
     // Select Object
-    func selectObject(objectID: Int) {
-        let opcodeArray = intToByteArray(value: 00)
-        let objectIDArray = intToByteArray(value: objectID)
-        let instruction = opcodeArray + objectIDArray
-        switch client.send(data: instruction) {
-        case .success:
-            return
-        case .failure(let error):
-            print(error)
+    func selectObject(objectID: inout Int) {
+        let opcode = UInt8(00)
+        let count = MemoryLayout<UInt32>.size
+        let bytePtr = withUnsafePointer(to: &objectID) {
+            $0.withMemoryRebound(to: UInt8.self, capacity: count) {
+                UnsafeBufferPointer(start: $0, count: count)
+            }
+        }
+        let byteArray = Array(bytePtr)
+        let instruction = [opcode] + byteArray
+        do {
+            try mySocket.write(from: Data(instruction))
+        } catch {
             return
         }
     }
@@ -289,49 +293,30 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     }
     
     @objc func handleTap(_ sender: UITapGestureRecognizer) {
-        if doesBallExist == true {
-            return
-        }
-        if ballNode.isHidden == true {
-            ballNode.isHidden = false
+        if self.anchorInitialized == false {
+            let (_, position) = self.initializeAnchorVector()
+            self.anchor.position = position
+            self.anchorInitialized = true
+            socketSetup()
         } else {
-            return
-        }
-        if objectID == 0 {
-            objectID = 1
-            enterGame()
-        }
+            if (!gameAllowedToStart) {
+                self.enterGame()
+                gameAllowedToStart = true
+            }
 
-        let (direction, position) = self.initializeUserVector()
+            let (direction, position) = self.initializeUserVector()
 
-        ballNode.position = position
-        
-        let ballDir = direction
-        
-        var gameExisting = true
-        var playerWins = false
-        
-        let velocity = Float(0.5) //meters/second
-        let timeStep = Float(0.0083333333333333) //seconds
-        sceneView.scene.rootNode.addChildNode(ballNode)
-        
-//        while (gameExisting) {
-//            ballNode.position = SCNVector3(
-//                ballNode.position.x + velocity * timeStep,
-//                ballNode.position.y + velocity * timeStep,
-//                ballNode.position.z + velocity * timeStep)
+//            ballNode.position = position
+//
+//            let ballDir = direction
+//
+//            var gameExisting = true
+//            var playerWins = false
+//
+//            let velocity = Float(0.5) //meters/second
+//            let timeStep = Float(0.0083333333333333) //seconds
 //            sceneView.scene.rootNode.addChildNode(ballNode)
-//            doesBallExist = true
-//
-//            //TODO - Conditions to change  playerWins
-//
-//            if (playerWins) {
-//                gameExisting = false
-//            }
-//        }
-//        ballNode.physicsBody?.applyForce(ballDir, asImpulse: true)
-//        sceneView.scene.rootNode.addChildNode(ballNode)
-//        doesBallExist = true
+        }
     }
     
     struct CollisionCategory: OptionSet {
@@ -340,7 +325,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         static let user = CollisionCategory(rawValue: 1 << 1) // 00..10
     }
     
-    func initializeUserVector() -> (SCNVector3, SCNVector3) {
+    func initializeAnchorVector() -> (SCNVector3, SCNVector3) {
         if let frame = self.sceneView.session.currentFrame {
             let mat = SCNMatrix4(frame.camera.transform)
             let ori = SCNVector3(-1 * mat.m31, -1 * mat.m32, -1 * mat.m33)
@@ -350,40 +335,37 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         return (SCNVector3(0, 0, -0.2), SCNVector3(0, 0, -1))
     }
     
-    @objc func getUserVector() {
+    func initializeUserVector() -> (SCNVector3, SCNVector3) {
         if let frame = self.sceneView.session.currentFrame {
             let mat = SCNMatrix4(frame.camera.transform)
             let ori = SCNVector3(-1 * mat.m31, -1 * mat.m32, -1 * mat.m33)
             let pos = SCNVector3(mat.m41, mat.m42, mat.m43)
-            updateUserSpatialInformationByteArray(position: vectorToByteArray(vector: pos), orientation: vectorToByteArray(vector: ori))
+            let newPos = SCNVector3(pos.x - anchor.position.x, pos.y - anchor.position.y, pos.z - anchor.position.z)
+            return (newPos, ori)
+        }
+        return (SCNVector3(0, 0, -0.2), SCNVector3(0, 0, -1))
+    }
+    
+    @objc func getUserVector() {
+        if self.anchorInitialized == false {
+            return
+        }
+        if let frame = self.sceneView.session.currentFrame {
+            let mat = SCNMatrix4(frame.camera.transform)
+            var ori = SCNVector3(-1 * mat.m31, -1 * mat.m32, -1 * mat.m33)
+            let pos = SCNVector3(mat.m41, mat.m42, mat.m43)
+            var newPos = SCNVector3(pos.x - anchor.position.x, pos.y - anchor.position.y, pos.z - anchor.position.z)
+            sendLabel.text = String(describing: newPos)
+            updateUserSpatialInformationByteArray(position: vectorToByteArray(vector: &newPos), orientation: vectorToByteArray(vector: &ori))
         }
     }
-    
-    func byteArrayToFloat(byteArray: [UInt8]) -> Float {
-        let data = Data(bytes: byteArray)
-        return Float(UInt32(bigEndian: data.withUnsafeBytes { $0.pointee }))
-    }
-    
-    func byteArrayToInt(byteArray: [UInt8]) -> Int {
-        let data = Data(bytes: byteArray)
-        return Int(UInt32(bigEndian: data.withUnsafeBytes { $0.pointee }))
-    }
-    
-    func intToByteArray(value: Int) -> [UInt8] {
-        var value = value
-        return withUnsafePointer(to: &value) {
-            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Int>.size) {
-                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Int>.size))
-            }
-        }
-    }
-    
-    func floatToByteArray(value: Float) -> [UInt8] {
-        var value = value
-        return withUnsafePointer(to: &value) {
-            $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Float>.size) {
-                Array(UnsafeBufferPointer(start: $0, count: MemoryLayout<Float>.size))
-            }
-        }
+}
+
+extension float4x4 {
+    /// Treats matrix as a (right-hand column-major convention) transform matrix
+    /// and factors out the translation component of the transform.
+    var translation: float3 {
+        let translation = self.columns.3
+        return float3(translation.x, translation.y, translation.z)
     }
 }

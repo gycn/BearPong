@@ -10,8 +10,6 @@
 		19891CBE3833145F435847D3 /* Pods_BearPongUITests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E779D8952A8C08892FE3A26F /* Pods_BearPongUITests.framework */; };
 		2ECCD56179636BA385FED5D6 /* Pods_BearPong.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5518546BBA409724BE791D08 /* Pods_BearPong.framework */; };
 		2F48EDBA0CE6A06EBF1B539A /* Pods_BearPongTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 43EB66C8DB1E275B32638E05 /* Pods_BearPongTests.framework */; };
-		B34F8BA51F2D216100DE0959 /* ytcpsocket.c in Sources */ = {isa = PBXBuildFile; fileRef = B34F8BA41F2D215400DE0959 /* ytcpsocket.c */; };
-		B34F8BA71F2D276800DE0959 /* SwiftSocket.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = B34F8BA61F2D276800DE0959 /* SwiftSocket.framework */; };
 		B3BB70221F2D976200313D28 /* EntranceViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3BB70211F2D976200313D28 /* EntranceViewController.swift */; };
 		B3F4F5A21F2D075B001ADF46 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F4F5A11F2D075B001ADF46 /* AppDelegate.swift */; };
 		B3F4F5A41F2D075B001ADF46 /* art.scnassets in Resources */ = {isa = PBXBuildFile; fileRef = B3F4F5A31F2D075B001ADF46 /* art.scnassets */; };
@@ -50,7 +48,6 @@
 		59AAE93B15036E8341C7B053 /* Pods-BearPongTests.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BearPongTests.debug.xcconfig"; path = "Pods/Target Support Files/Pods-BearPongTests/Pods-BearPongTests.debug.xcconfig"; sourceTree = "<group>"; };
 		A97AE6969B545B6568B02B24 /* Pods-BearPong.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BearPong.debug.xcconfig"; path = "Pods/Target Support Files/Pods-BearPong/Pods-BearPong.debug.xcconfig"; sourceTree = "<group>"; };
 		AE937CDAD25D7CCB06B56479 /* Pods-BearPong.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-BearPong.release.xcconfig"; path = "Pods/Target Support Files/Pods-BearPong/Pods-BearPong.release.xcconfig"; sourceTree = "<group>"; };
-		B34F8BA41F2D215400DE0959 /* ytcpsocket.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = ytcpsocket.c; path = ../Pods/SwiftSocket/ytcpsocket.c; sourceTree = "<group>"; };
 		B34F8BA61F2D276800DE0959 /* SwiftSocket.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftSocket.framework; path = "../../../Library/Developer/Xcode/DerivedData/BearPong-hhknnuehcwvjuofiymndohgottxf/Build/Products/Debug-iphoneos/SwiftSocket/SwiftSocket.framework"; sourceTree = "<group>"; };
 		B3BB70201F2D94F200313D28 /* backimage.jpg */ = {isa = PBXFileReference; lastKnownFileType = image.jpeg; name = backimage.jpg; path = ../../../../Downloads/backimage.jpg; sourceTree = "<group>"; };
 		B3BB70211F2D976200313D28 /* EntranceViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntranceViewController.swift; sourceTree = "<group>"; };
@@ -81,7 +78,6 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B34F8BA71F2D276800DE0959 /* SwiftSocket.framework in Frameworks */,
 				2ECCD56179636BA385FED5D6 /* Pods_BearPong.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -141,7 +137,6 @@
 		B3F4F5A01F2D075B001ADF46 /* BearPong */ = {
 			isa = PBXGroup;
 			children = (
-				B34F8BA41F2D215400DE0959 /* ytcpsocket.c */,
 				B3F4F5A11F2D075B001ADF46 /* AppDelegate.swift */,
 				B3F4F5A31F2D075B001ADF46 /* art.scnassets */,
 				B3F4F5A51F2D075B001ADF46 /* ViewController.swift */,
@@ -473,7 +468,6 @@
 				B3F4F5A21F2D075B001ADF46 /* AppDelegate.swift in Sources */,
 				B3FFF6621F2D448E001A7CCC /* Ball.swift in Sources */,
 				B3BB70221F2D976200313D28 /* EntranceViewController.swift in Sources */,
-				B34F8BA51F2D216100DE0959 /* ytcpsocket.c in Sources */,
 				B3F4F5D21F2D12C9001ADF46 /* HomeViewController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
