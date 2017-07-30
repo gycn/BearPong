@@ -12,21 +12,23 @@ import SceneKit
 import ARKit
 import SwiftSocket
 
+
 class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDelegate {
 
     @IBOutlet var textLabel: UILabel!
     @IBOutlet var sceneView: ARSCNView!
     
+    @IBOutlet var sendLabel: UILabel!
     
-    var client:TCPClient = TCPClient(address: "192.168.0.103", port: Int32(8007))
+    var client:TCPClient = TCPClient(address: "192.168.0.101", port: Int32(8007))
     var doesBallExist = false
     
     // Opcodes
-    let UPDATE_USER_SPATIAL_INFORMATION_OPCODE = 0x00
-    let SELECT_OBJECT_OPCODE = 0x01
-    let UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE = 0x10
-    let SEND_USER_ID_OPCODE = 0x11
-    let SELECT_OBJECT_RESPONSE_OPCODE = 0x12
+    let UPDATE_USER_SPATIAL_INFORMATION_OPCODE = UInt8(0x00)
+    let SELECT_OBJECT_OPCODE = UInt8(0x01)
+    let UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE = UInt8(0x10)
+    let SEND_USER_ID_OPCODE = UInt8(0x11)
+    let SELECT_OBJECT_RESPONSE_OPCODE = UInt8(0x12)
     
     // Opcodes
     var receivedOpcode: Int = 0
@@ -36,10 +38,15 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     var ballNode = Ball()
     
     // UserID
-    var userID: Int = 0
+    var userID: [UInt8] = []
     
     // Frames per second or refresh rate
     var FPS: Int = 15
+    
+    // ObjectID
+    var objectID: Int = 0
+    
+    var receivedUserID = false
     
     
     override func viewDidLoad() {
@@ -69,44 +76,54 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         sceneView.scene = scene
         sceneView.scene.physicsWorld.contactDelegate = self
         socketSetup()
-
+        
+        
+        //Asynchronous
+        
     }
+    
+    
     
     func socketSetup() {
         switch client.connect(timeout: 3) {
         case .success:
+            print("hi")
             // Start sending and receiving data at FPS intervals
-            Timer.scheduledTimer(timeInterval: 0.08, target: self, selector: #selector(ViewController.sendData), userInfo: nil, repeats: true)
-            Timer.scheduledTimer(timeInterval: 0.08, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
-            Timer.scheduledTimer(timeInterval: 0.08, target: self, selector: #selector(ViewController.getUserVector), userInfo: nil, repeats: true)
+            // Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(ViewController.sendData), userInfo: nil, repeats: true)
+            //var timer = Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
+            // Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(ViewController.getUserVector), userInfo: nil, repeats: true)
         case .failure(let error):
             print(error)
         }
     }
+    
+    
     
     @objc func sendData() {
         switch client.send(data: sentInstruction) {
         case .success:
-            print("success2")
+            return
         case .failure(let error):
-            print("error1")
             print(error)
+            return
         }
     }
 
-    @objc func receiveData() {
+    @objc func receiveData(data: [UInt8]) {
         guard let data = client.read(1024*10) else { return }
-        if let response = String(bytes: data, encoding: .utf8) {
-            textLabel.text = response
-        }
-        //userUpdate(instruction: data)
+//        if let response = String(bytes: data, encoding: .ASCII) {
+//            if response != "" {
+//                textLabel.text = response
+//            }
+//        }
+        userUpdate(instruction: data)
     }
     
     // Get Instruction
     func userUpdate(instruction: [UInt8]) {
-        let array = instruction[0...1]
-        let receivedOpcode = byteArrayToInt(byteArray: Array(array))
-        switch receivedOpcode {
+        
+        let opcode = instruction[0]
+        switch opcode {
         case UPDATE_USER_SPATIAL_INFORMATION_OPCODE:
             return
         case SELECT_OBJECT_OPCODE:
@@ -135,14 +152,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             return
             
         case SEND_USER_ID_OPCODE:
-            let userID = byteArrayToInt(byteArray: Array(instruction[2...9]))
-            self.userID = userID
+            let uID = Array(instruction[1...4])
+            self.userID = uID
+            textLabel.text = String(describing: instruction)
+            receivedUserID = true
+            return
 
         case SELECT_OBJECT_RESPONSE_OPCODE:
             let response = byteArrayToInt(byteArray: Array(instruction[2...3]))
             
         default:
-            print("hi")
+            return
         }
     }
     
@@ -153,10 +173,34 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         return X + Y + Z
     }
     
+    // Send Start/Enter Game Signal
+    func enterGame() {
+        let opcodeArray = intToByteArray(value: 255)
+        let length = intToByteArray(value: 1)
+        let packetData = intToByteArray(value: 17)
+//        let instruction = opcodeArray + length + packetData
+        let instruction = [UInt8(255), UInt8(1), UInt8(17)]
+        switch client.send(data: instruction) {
+        case .success:
+            sendLabel.text = String(describing: instruction)
+            return
+        case .failure(let error):
+            print(error)
+            return
+        }
+    }
+    
     // Update User Spatial Information If Byte Array
     func updateUserSpatialInformationByteArray(position: [UInt8], orientation: [UInt8]) {
         let opcodeArray = intToByteArray(value: 00)
-        sentInstruction = opcodeArray + position + orientation
+        let instruction = opcodeArray + position + orientation
+        switch client.send(data: instruction) {
+        case .success:
+            return
+        case .failure(let error):
+            print(error)
+            return
+        }
     }
 
     // Update User Spatial Information
@@ -167,7 +211,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         // orientation needs to be 4D
         let orientationArray = floatToByteArray(value: orientation)
         let instruction = opcodeArray + positionArray + orientationArray
-        sentInstruction = instruction
+        switch client.send(data: instruction) {
+        case .success:
+            return
+        case .failure(let error):
+            print(error)
+            return
+        }
     }
     
     // Select Object
@@ -175,7 +225,13 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         let opcodeArray = intToByteArray(value: 00)
         let objectIDArray = intToByteArray(value: objectID)
         let instruction = opcodeArray + objectIDArray
-        sentInstruction = instruction
+        switch client.send(data: instruction) {
+        case .success:
+            return
+        case .failure(let error):
+            print(error)
+            return
+        }
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -236,12 +292,17 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         if doesBallExist == true {
             return
         }
-        print("1")
-        ballNode.isHidden = false
-        print("2")
+        if ballNode.isHidden == true {
+            ballNode.isHidden = false
+        } else {
+            return
+        }
+        if objectID == 0 {
+            objectID = 1
+            enterGame()
+        }
 
         let (direction, position) = self.initializeUserVector()
-        print("1")
 
         ballNode.position = position
         
@@ -253,6 +314,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         let velocity = Float(0.5) //meters/second
         let timeStep = Float(0.0083333333333333) //seconds
         sceneView.scene.rootNode.addChildNode(ballNode)
+        
 //        while (gameExisting) {
 //            ballNode.position = SCNVector3(
 //                ballNode.position.x + velocity * timeStep,

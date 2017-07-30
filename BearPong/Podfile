@@ -7,6 +7,7 @@ target 'BearPong' do
 
   # Pods for BearPong
   pod 'SwiftSocket', '~> 2.0'
+  pod 'BlueSocket'
 
   target 'BearPongTests' do
     inherit! :search_paths
