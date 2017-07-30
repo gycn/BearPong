@@ -37,7 +37,7 @@ class ARWebServerProtocol(Protocol):
     def connectionMade(self):
         self.factory.numProtocols = self.factory.numProtocols + 1
         print('New Connection')
-        
+
         #Add new user to scene
         self.user = self.scene.new_user(self)
         #User creation was not successful
@@ -54,23 +54,23 @@ class ARWebServerProtocol(Protocol):
 
     def dataReceived(self, data):
         while (len(data) > 0):
-          opcode = get_opcode(data)
-          if (opcode in self.OPCODE_FUNCTIONS):
+            opcode = get_opcode(data)
+            if (opcode in self.OPCODE_FUNCTIONS):
             #Get next packet length
-            if opcode in packet_codes.COMMAND_LENGTHS:
-              packet_length = packet_codes.COMMAND_LENGTHS[opcode]
-              self.OPCODE_FUNCTIONS[opcode](data[:packet_length + 1])
-              data = data[packet_length + 1:]
+                if opcode in packet_codes.COMMAND_LENGTHS:
+                    packet_length = packet_codes.COMMAND_LENGTHS[opcode]
+                    self.OPCODE_FUNCTIONS[opcode](data[:packet_length + 1])
+                    data = data[packet_length + 1:]
+                else:
+                    packet_length = data[1]
+                    self.OPCODE_FUNCTIONS[opcode](data[2:packet_length + 2])
+                    data = data[packet_length + 2:]
             else:
-              packet_length = data[1] 
-              self.OPCODE_FUNCTIONS[opcode](data[2:packet_length + 2])
-              data = data[packet_length + 2:]
-          else:
-            print('invalid command')
+                print('invalid command')
 
     def handle_new_user_spatial_information(self, data):
-        new_position = np.array([convert_bytes_to_float(data[i:i + 4]) for i in range(1, 13, 4)]) 
-        new_direction = np.array([convert_bytes_to_float(data[i:i + 4]) for i in range(13, 25, 4)]) 
+        new_position = np.array([convert_bytes_to_float(data[i:i + 4]) for i in range(1, 13, 4)])
+        new_direction = np.array([convert_bytes_to_float(data[i:i + 4]) for i in range(13, 25, 4)])
         print('New User Spatial Information: {} {}'.format(new_position, new_direction))
         self.user.on_new_user_spatial_information(new_position, new_direction)
 
@@ -78,9 +78,9 @@ class ARWebServerProtocol(Protocol):
         object_id = convert_bytes_to_int(data[1:5])
         print(data[1:5])
         print(object_id)
-        success = self.scene.get_object(object_id).on_object_select(self.user)
+        # success = self.scene.get_object(object_id).on_object_select(user)
         self.transport.write(bytearray([packet_codes.SELECT_OBJECT_RESPONSE_OPCODE, success]))
-    
+
     def handle_implementation_specific_message(self, data):
         print(data)
         #self.user.on_implementation_specific_message(data)
@@ -89,9 +89,9 @@ class ARWebServerFactory(Factory):
 
     def __init__(self, scene):
         self.numProtocols = 0
-        
+
         #Scene contains the user and object information
-        self.scene = scene 
+        self.scene = scene
 
     def buildProtocol(self, addr):
         return ARWebServerProtocol(self, addr, self.scene)
@@ -102,9 +102,9 @@ class ARServer:
         self.endpoint.listen(ARWebServerFactory(scene))
         self.scene = scene
         self.main_loop_interval = main_loop_interval
-    
+
     def main_loop(self):
-        #self.scene.main_loop()
+        self.scene.main_loop()
         self.scene.send_object_updates()
 
     def start(self):
