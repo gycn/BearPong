@@ -90,6 +90,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         userUpdate(instruction: data)
     }
     
+    // Get Instruction
     func userUpdate(instruction: [UInt8]) {
         let array = instruction[0...1]
         let receivedOpcode = byteArrayToInt(byteArray: Array(array))
@@ -99,25 +100,39 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         case SELECT_OBJECT_OPCODE:
             return
         case UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE:
-            let objectID = instruction[2...9]
-            let position = instruction[10...33]
-            let orientation = instruction[34...57]
-            let velocity = instruction[58...81]
+            let objectID = byteArrayToInt(byteArray: Array(instruction[2...9]))
+            let position = byteArrayToFloat(byteArray: Array(instruction[10...33]))
+            let orientation = byteArrayToFloat(byteArray: Array(instruction[34...57]))
+            let velocity = byteArrayToFloat(byteArray: Array(instruction[58...81]))
 
         case SEND_USER_ID_OPCODE:
-            let userID = instruction[2...9]
+            let userID = byteArrayToInt(byteArray: Array(instruction[2...9]))
 
         case SELECT_OBJECT_RESPONSE_OPCODE:
-            let response = [2...3]
+            let response = byteArrayToInt(byteArray: Array(instruction[2...3]))
+            
         default:
             print("hi")
         }
     }
     
-    func updateSpatial(position: Int, orientation: Int) {
-        let opcode = [00]
+    // Update User Spatial Information
+    func updateUserSpatialInformaiton(position: Int, orientation: Float) -> [UInt8] {
+        let opcodeArray = intToByteArray(value: 00)
         let positionArray = intToByteArray(value: position)
+        let orientationArray = floatToByteArray(value: orientation)
+        let instruction = opcodeArray + positionArray + orientationArray
+        return instruction
     }
+    
+    // Select Object
+    func selectObject(objectID: Int) -> [UInt8] {
+        let opcodeArray = intToByteArray(value: 00)
+        let objectIDArray = intToByteArray(value: objectID)
+        let instruction = opcodeArray + objectIDArray
+        return instruction
+    }
+    
     override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         configureSession()
@@ -243,7 +258,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         }
     }
     
-    func intToByteArray(value: Float) -> [UInt8] {
+    func floatToByteArray(value: Float) -> [UInt8] {
         var value = value
         return withUnsafePointer(to: &value) {
             $0.withMemoryRebound(to: UInt8.self, capacity: MemoryLayout<Float>.size) {
