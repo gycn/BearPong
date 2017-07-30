@@ -56,8 +56,8 @@ class Scene:
     def main_loop(self):
         raise NotImplemented('Implement this')
 
-    def on_implementation_specific_message(self, msg):
-        raise NotImplemented
+    # def on_implementation_specific_message(self, msg):
+    #     raise NotImplemented
 
     # def new_object(self, protocol):
     #     # instantiate with zeros for direction/position
@@ -72,10 +72,10 @@ class Scene:
         else:
             self.generate_object_id(obj)
             self.objects[obj.id] = obj
-            
+
     def send_message_to_all_users(self, msg):
         for key, user in self.users.items():
-            self.user.protocol.write(msg)
+            user.protocol.transport.write(msg)
 
     def send_object_updates(self):
         for key, obj in self.objects.items():
