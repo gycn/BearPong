@@ -22,3 +22,6 @@ class User:
     def on_new_user_spatial_information(self, newPos, newDir):
         self.position = newPos
         self.direction = newDir
+
+    def on_implementation_specific_message(self, msg):
+        raise NotImplemented()
