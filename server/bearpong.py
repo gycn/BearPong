@@ -16,10 +16,11 @@ class PongBall(AR_Object):
 class BearPongScene(Scene):
     def __init__(self, radius = 1, dt = 0.017):
         Scene.__init__()
-        self.add_object(PongBall())
+        self.add_object(PongBall(np.zeros((1,3)), np.zeros((1,3))))
         self.scores = [0,0]
         self.started = False
-        self.turn = 0 if np.rand() > 0.5 else 1
+        # pylint: disable=no-member
+        self.turn = 0 if np.random.rand() > 0.5 else 1
         self.radius = radius
         self.dt = dt
         self.sent_turn_start = False
@@ -31,24 +32,23 @@ class BearPongScene(Scene):
             temp = BearUser(0, 0, 0)
             temp.id = 0xFFFFFFFF
             return temp
-        else:
-            # Overwrite to accomadate Bear Users
-            new = BearUser(np.zeros((3)), np.zeros((3)), protocol)
-            self.add_user(new)
-            assert new.id, 'New User must have an ID'
-            return new
+        # Overwrite to accomadate Bear Users
+        new = BearUser(np.zeros((3)), np.zeros((3)), protocol)
+        self.add_user(new)
+        assert new.id, 'New User must have an ID'
+        return new
 
     def on_implementation_specific_message(self, msg):
         # receive message from client to start game for each player
         if msg == GAME_START_PLAYER_1:
             self.users[0].game_start = True
-        elif msg = GAME_START_PLAYER_2:
+        elif msg == GAME_START_PLAYER_2:
             self.users[1].game_start = True
         if all([u.game_start for u in self.users]):
             self.started = True
-            self.objects[0].velocity = self.users[1 - turn].position - self.users[turn].position
+            self.objects[0].velocity = self.users[1 - self.turn].position - self.users[self.turn].position
 
-    def ball_out_of_bounds(epsilon=0.01):
+    def ball_out_of_bounds(self, epsilon=0.01):
         # check if ball is out of lateral bounds; ignores z-direction
         return np.linalg.norm(self.objects[0].position[:2]) >= epsilon + self.radius
 
@@ -64,7 +64,7 @@ class BearPongScene(Scene):
     def update_ball_position(self, ceiling = 2, floor = 0):
         # handle case where ball continues in straight trajectory
         ball = self.objects[0]
-        newPos = ball.velocity * dt + ball.position
+        newPos = ball.velocity * self.dt + ball.position
         ball.position = newPos
         if (ball.position[2] >= ceiling):
             ball.position[2] = ceiling
@@ -77,19 +77,19 @@ class BearPongScene(Scene):
         # handle case where user hits the ball
         ball = self.objects[0]
         ball_vel = ball.velocity
-        ball.velocity = ball_vel - 2 * np.dot(ball_vel, self.users[turn].direction) * self.users[turn].direction
+        ball.velocity = ball_vel - 2 * np.dot(ball_vel, self.users[self.turn].direction) * self.users[self.turn].direction
 
     def main_loop(self):
-        if (self.started):
+        if self.started:
             # check ball position, if user near -> ball bounce, if ball outside bounds -> point
-            if(ball_out_of_bounds()):
-                game_end()
+            if self.ball_out_of_bounds():
+                self.game_end()
             # check user positions
-            if(user_dist_to_ball() > 0.01):
-                update_ball_position()
+            if self.user_dist_to_ball() > 0.01:
+                self.update_ball_position()
             else:
-                update_ball_bounce()
+                self.update_ball_bounce()
         else:
-            if(!self.sent_turn_start && self.user_count == 2):
+            if not self.sent_turn_start and self.user_count == 2:
                 self.sent_turn_start = True
                 self.send_message_to_all_users(FIRST_PLAYER + bytes(self.turn))
