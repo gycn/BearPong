@@ -14,6 +14,7 @@ UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE = 0x10
 SEND_USER_ID_OPCODE = 0x11
 SELECT_OBJECT_RESPONSE_OPCODE = 0x12
 
+SEND_IMPLEMENTATION_SPECIFIC_MESSAGE = 0xFF 
 def get_opcode(bytes_in):
     return bytes_in[0]
 
@@ -32,7 +33,8 @@ class ARWebServerProtocol(Protocol):
         self.user = None
         self.OPCODE_FUNCTIONS = {
           UPDATE_USER_SPATIAL_INFORMATION_OPCODE: self.handle_new_user_spatial_information,
-          SELECT_OBJECT_OPCODE: self.handle_object_selection
+          SELECT_OBJECT_OPCODE: self.handle_object_selection,
+          SEND_IMPLEMENTATION_SPECIFIC_MESSAGE: self.handle_implementation_specific_message
         }
 
     def connectionMade(self):
@@ -41,8 +43,13 @@ class ARWebServerProtocol(Protocol):
         
         #Add new user to scene
         self.user = self.scene.new_user(self)
-        #Send user id back
-        self.transport.write(bytearray([SEND_USER_ID_OPCODE, self.user.id]))
+        #User creation was not successful
+        if user.id == 0xFFFFFFFF:
+            self.loseConnection()
+        #User creation successful
+        else:
+          #Send user id back
+          self.transport.write(bytearray([SEND_USER_ID_OPCODE, self.user.id]))
 
     def connectionLost(self, reason):
         self.factory.numProtocols = self.factory.numProtocols - 1
@@ -67,6 +74,9 @@ class ARWebServerProtocol(Protocol):
         print(object_id)
         success = self.scene.get_object(object_id).on_object_select(user)
         self.transport.write(bytearray([SELECT_OBJECT_RESPONSE_OPCODE, success]))
+    
+    def handle_implementation_specific_message(self, data):
+        self.scene.on_implementation_specific_message(data[1:])
 
 class ARWebServerFactory(Factory):
 
@@ -80,14 +90,14 @@ class ARWebServerFactory(Factory):
         return ARWebServerProtocol(self, addr, self.scene)
 
 class ARServer:
-    def __init__(self, scene, port, main_loop_interval = 0.0083):
+    def __init__(self, scene, port, main_loop_interval = 0.017):
         self.endpoint = TCP4ServerEndpoint(reactor, port)
         self.endpoint.listen(ARWebServerFactory(scene))
         self.main_loop = LoopingCall(scene.main_loop)
         self.main_loop_interval = main_loop_interval
 
     def start(self):
-        self.main_loop.start(self.main_loop_interval)
+        #self.main_loop.start(self.main_loop_interval)
         reactor.run()
 
 
