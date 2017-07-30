@@ -1,0 +1,6 @@
+framework module Pods_BearPongUITests {
+  umbrella header "Pods-BearPongUITests-umbrella.h"
+
+  export *
+  module * { export * }
+}
