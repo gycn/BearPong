@@ -112,14 +112,12 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
 //            // Start sending and receiving data at FPS intervals
 //            // Timer.scheduledTimer(timeInterval: 3, target: self, selector: #selector(ViewController.sendData), userInfo: nil, repeats: true)
         
-        _ = Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
-       Timer.scheduledTimer(timeInterval: 0.5, target: self, selector: #selector(ViewController.getUserVector), userInfo: nil, repeats: true)
+        Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(ViewController.receiveData), userInfo: nil, repeats: true)
+        Timer.scheduledTimer(timeInterval: 0.05, target: self, selector: #selector(ViewController.getUserVector), userInfo: nil, repeats: true)
 //        case .failure(let error):
 //            print(error)
 //        }
     }
-    
-    
     
     @objc func sendData() {
         do {
@@ -135,7 +133,7 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
         do {
             var num_bytes = try mySocket.read(into: &readData)
             if num_bytes > 0 {
-                userUpdate(instruction: Array(readData))
+                userUpdate(instr: Array(readData))
             }
         } catch {
             return
@@ -154,9 +152,19 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     
     func update_object_spatial_information(instruction: [UInt8]) {
         var objectID = convert_bytes_to_UInt32(arr : instruction, offset : 1)
-        ballNode.position.x = convert_bytes_to_float(arr : instruction, offset : 5) + anchor.position.x
-        ballNode.position.y = convert_bytes_to_float(arr : instruction, offset : 9) + anchor.position.y
-        ballNode.position.z = convert_bytes_to_float(arr : instruction, offset : 13) + anchor.position.z
+//        ballNode.position.x = convert_bytes_to_float(arr : instruction, offset : 5) + anchor.position.x
+//        ballNode.position.y = convert_bytes_to_float(arr : instruction, offset : 9) + anchor.position.y
+//        ballNode.position.z = convert_bytes_to_float(arr : instruction, offset : 13) + anchor.position.z
+        
+        memcpy(&ballNode.position.x, Array(instruction[5...8]), 4)
+        ballNode.position.x += anchor.position.x
+        memcpy(&ballNode.position.y, Array(instruction[9...12]), 4)
+        ballNode.position.y += anchor.position.y
+        memcpy(&ballNode.position.z, Array(instruction[13...16]), 4)
+        ballNode.position.z += anchor.position.z
+        
+        self.sendLabel.text = String(describing: ballNode.position)
+        sceneView.scene.rootNode.addChildNode(ballNode)
         
         ballNode.velocity.x = convert_bytes_to_float(arr : instruction, offset : 29)
         ballNode.velocity.y = convert_bytes_to_float(arr : instruction, offset : 33)
@@ -164,24 +172,42 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
     }
     
     // Get Instruction
-    func userUpdate(instruction: [UInt8]) {
+    func userUpdate(instr: [UInt8]) {
+        var instruction = instr
         while instruction.count > 0 {
         let opcode = instruction[0]
             switch opcode {
             case UPDATE_OBJECT_SPATIAL_INFORMATION_OPCODE:
                 update_object_spatial_information(instruction : instruction)
-                return
-                
+                if instruction.count > 41 {
+                    instruction = Array(instruction[41..<instruction.count])
+                    continue
+                }
+                else {
+                    return
+                }
             case SEND_USER_ID_OPCODE:
-                var uID = convert_bytes_to_UInt32(arr : instruction, offset : 1)
+                let uID = convert_bytes_to_UInt32(arr : instruction, offset : 1)
                 self.userID = uID
                 receivedUserID = true
-                return
+                if instruction.count > 5 {
+                    instruction = Array(instruction[5..<instruction.count])
+                    continue
+                }
+                else {
+                    return
+                }
             case ALLOWED_TO_START_GAME:
                 gameAllowedToStart = true
-                textLabel.text = String(describing: gameAllowedToStart)
                 ballNode.isHidden = false
-                return
+                textLabel.text = String(describing: ballNode.isHidden)
+                if instruction.count > 4 {
+                    instruction = Array(instruction[4..<instruction.count])
+                    continue
+                }
+                else {
+                    return
+                }
             case SELECT_OBJECT_RESPONSE_OPCODE:
                 return
             
@@ -315,7 +341,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
 //
 //            let velocity = Float(0.5) //meters/second
 //            let timeStep = Float(0.0083333333333333) //seconds
-//            sceneView.scene.rootNode.addChildNode(ballNode)
         }
     }
     
@@ -355,7 +380,6 @@ class ViewController: UIViewController, ARSCNViewDelegate, SCNPhysicsContactDele
             var ori = SCNVector3(-1 * mat.m31, -1 * mat.m32, -1 * mat.m33)
             let pos = SCNVector3(mat.m41, mat.m42, mat.m43)
             var newPos = SCNVector3(pos.x - anchor.position.x, pos.y - anchor.position.y, pos.z - anchor.position.z)
-            sendLabel.text = String(describing: newPos)
             updateUserSpatialInformationByteArray(position: vectorToByteArray(vector: &newPos), orientation: vectorToByteArray(vector: &ori))
         }
     }
