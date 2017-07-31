@@ -12,19 +12,18 @@ import UIKit
 class HomeViewController: UIViewController {
     
     @IBOutlet weak var button: UIButton!
-    @IBOutlet weak var passwordField: UITextField!
-    var password = ""
-    var passwordArray = [String]()
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        view.backgroundColor = UIColor.darkGray
-        passwordField.delegate = self as? UITextFieldDelegate
-        passwordField.text = "Room Name"
-        passwordField.font = UIFont(name: "Avenir", size: 14)
-        button.setTitle("Join/Create Room", for: .normal)
-        button.tintColor = UIColor.green
+        
+        view.backgroundColor = UIColor.white
+        button.setTitle("Tap to Play", for: .normal)
+        button.tintColor = UIColor.black
         button.titleLabel?.font = UIFont(name: "Avenir", size: 14)
+        button.layer.cornerRadius = 5
+        button.clipsToBounds = true
+        button.layer.borderWidth = 1.5
+        button.layer.borderColor = UIColor.black.cgColor
         // Do any additional setup after loading the view.
     }
     func dismissKeyboard() {
@@ -33,8 +32,7 @@ class HomeViewController: UIViewController {
     }
     
     @IBAction func buttonPressed(_ sender: Any) {
-        self.password = passwordField.text!
-        passwordArray.append(passwordField.text!)
+        
         self.performSegue(withIdentifier: "ARViewSegue", sender: sender)
     }
     
